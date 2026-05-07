@@ -18,6 +18,13 @@ import type { EdgeInsets, Metrics, Rect } from "react-native-safe-area-context";
 
 import { trpc, createTRPCClient } from "@/lib/trpc";
 import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-runtime";
+import { Provider, useSelector, useDispatch } from "react-redux";
+import { store } from "@/src/store";
+import type { RootState } from "@/src/store";
+import { restoreAuthState } from "@/src/store/slices/authSlice";
+import { getAuthState, isSetupComplete } from "@/src/utils/storage";
+import { initializeDatabase } from "@/src/database/schema";
+import SplashScreen from "@/src/screens/SplashScreen";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -26,7 +33,43 @@ export const unstable_settings = {
   anchor: "(tabs)",
 };
 
-export default function RootLayout() {
+/**
+ * Root Layout with Auth Navigation
+ * Handles authentication flow and Redux state management
+ */
+function RootLayoutNav() {
+  const dispatch = useDispatch();
+  const auth = useSelector((state: RootState) => state.auth);
+  const [isReady, setIsReady] = useState(false);
+
+  // Initialize database and restore auth state
+  useEffect(() => {
+    async function initializeApp() {
+      try {
+        // Initialize SQLite database
+        await initializeDatabase();
+
+        // Restore auth state from AsyncStorage
+        const savedAuthState = await getAuthState();
+        if (savedAuthState) {
+          dispatch(restoreAuthState(savedAuthState));
+        }
+
+        // Check if setup is complete
+        const setupComplete = await isSetupComplete();
+        if (setupComplete) {
+          dispatch(restoreAuthState({ isSetupComplete: true }));
+        }
+      } catch (error) {
+        console.error('App initialization error:', error);
+      } finally {
+        setIsReady(true);
+      }
+    }
+
+    initializeApp();
+  }, [dispatch]);
+
   const initialInsets = initialWindowMetrics?.insets ?? DEFAULT_WEB_INSETS;
   const initialFrame = initialWindowMetrics?.frame ?? DEFAULT_WEB_FRAME;
 
@@ -78,15 +121,51 @@ export default function RootLayout() {
     };
   }, [initialInsets, initialFrame]);
 
+  if (!isReady) {
+    // Show splash screen while initializing
+    return (
+      <ThemeProvider>
+        <SafeAreaProvider initialMetrics={providerInitialMetrics}>
+          <SafeAreaFrameContext.Provider value={frame}>
+            <SafeAreaInsetsContext.Provider value={insets}>
+              <SplashScreen />
+            </SafeAreaInsetsContext.Provider>
+          </SafeAreaFrameContext.Provider>
+        </SafeAreaProvider>
+      </ThemeProvider>
+    );
+  }
+
   const content = (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
-          {/* Default to hiding native headers so raw route segments don't appear (e.g. "(tabs)", "products/[id]"). */}
-          {/* If a screen needs the native header, explicitly enable it and set a human title via Stack.Screen options. */}
-          {/* in order for ios apps tab switching to work properly, use presentation: "fullScreenModal" for login page, whenever you decide to use presentation: "modal*/}
           <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(tabs)" />
+            {!auth.isSetupComplete ? (
+              // Setup screen for first-time users
+              <Stack.Screen
+                name="setup"
+                options={{
+                  headerShown: false,
+                }}
+              />
+            ) : !auth.isLoggedIn ? (
+              // Login screen
+              <Stack.Screen
+                name="login"
+                options={{
+                  headerShown: false,
+                }}
+              />
+            ) : (
+              // Main app navigation
+              <Stack.Screen
+                name="(tabs)"
+                options={{
+                  headerShown: false,
+                }}
+              />
+            )}
             <Stack.Screen name="oauth/callback" />
           </Stack>
           <StatusBar style="auto" />
@@ -115,5 +194,13 @@ export default function RootLayout() {
     <ThemeProvider>
       <SafeAreaProvider initialMetrics={providerInitialMetrics}>{content}</SafeAreaProvider>
     </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <Provider store={store}>
+      <RootLayoutNav />
+    </Provider>
   );
 }
