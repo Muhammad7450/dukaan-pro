@@ -8,8 +8,10 @@ import { setProducts } from '@/src/store/slices/productsSlice';
 import { getTodaysSalesAmount, getTodaysTransactionCount } from '@/src/database/sales';
 import { getAllProducts, getLowStockProducts } from '@/src/database/products';
 import { formatCurrency } from '@/src/utils/currency';
+import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
+  const router = useRouter();
   const dispatch = useDispatch();
   const auth = useSelector((state: RootState) => state.auth);
   const sales = useSelector((state: RootState) => state.sales);
@@ -53,7 +55,7 @@ export default function HomeScreen() {
 
   return (
     <ScreenContainer className="p-4">
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={loading} onRefresh={loadDashboardData} />}>
         {/* Header */}
         <View className="mb-6">
           <Text className="text-3xl font-bold text-foreground">Welcome back!</Text>
@@ -81,17 +83,26 @@ export default function HomeScreen() {
         <View className="mb-6">
           <Text className="text-base font-semibold text-foreground mb-3">Quick Actions</Text>
           <View className="flex-row gap-3">
-            <TouchableOpacity className="flex-1 bg-primary rounded-lg p-4 items-center">
+            <TouchableOpacity 
+              onPress={() => router.push('../newsale')}
+              className="flex-1 bg-primary rounded-lg p-4 items-center"
+            >
               <Text className="text-2xl mb-2">💰</Text>
               <Text className="text-white font-semibold text-sm">New Sale</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity className="flex-1 bg-success rounded-lg p-4 items-center">
+            <TouchableOpacity 
+              onPress={() => router.push('../products/add')}
+              className="flex-1 bg-success rounded-lg p-4 items-center"
+            >
               <Text className="text-2xl mb-2">📦</Text>
               <Text className="text-white font-semibold text-sm">Add Product</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity className="flex-1 bg-warning rounded-lg p-4 items-center">
+            <TouchableOpacity 
+              onPress={() => router.push('../reports')}
+              className="flex-1 bg-warning rounded-lg p-4 items-center"
+            >
               <Text className="text-2xl mb-2">📊</Text>
               <Text className="text-white font-semibold text-sm">Reports</Text>
             </TouchableOpacity>

@@ -11,8 +11,10 @@ import type { RootState } from '@/src/store';
 import { setCustomers, setTotalUdhaar } from '@/src/store/slices/customersSlice';
 import { getAllCustomers, getTotalUdhaar, deleteCustomer } from '@/src/database/customers';
 import { formatCurrency } from '@/src/utils/currency';
+import { useRouter } from 'expo-router';
 
 export default function CustomersListScreen({ navigation }: any) {
+  const router = useRouter();
   const dispatch = useDispatch();
   const customers = useSelector((state: RootState) => state.customers);
   const [loading, setLoading] = useState(false);
@@ -78,7 +80,7 @@ export default function CustomersListScreen({ navigation }: any) {
 
   const renderCustomerCard = ({ item }: any) => (
     <TouchableOpacity
-      onPress={() => navigation.navigate('CustomerDetail', { customerId: item.id })}
+      onPress={() => router.push(`./${item.id}`)}
       className="bg-surface rounded-lg p-4 mb-3 border border-border"
     >
       <View className="flex-row justify-between items-start mb-2">
@@ -95,7 +97,7 @@ export default function CustomersListScreen({ navigation }: any) {
 
       <View className="flex-row gap-2 mt-3">
         <TouchableOpacity
-          onPress={() => navigation.navigate('CustomerDetail', { customerId: item.id })}
+          onPress={() => router.push(`./${item.id}`)}
           className="flex-1 bg-primary rounded p-2 items-center"
         >
           <Text className="text-white text-sm font-semibold">View</Text>
@@ -121,7 +123,7 @@ export default function CustomersListScreen({ navigation }: any) {
             <View className="flex-row justify-between items-center mb-4">
               <Text className="text-2xl font-bold text-foreground">Customers</Text>
               <TouchableOpacity
-                onPress={() => navigation.navigate('AddCustomer')}
+                onPress={() => router.push('./add')}
                 className="bg-primary rounded-full px-4 py-2"
               >
                 <Text className="text-white font-semibold">+ Add</Text>

@@ -12,8 +12,10 @@ import { addSaleItem, removeSaleItem, updateSaleItemQuantity } from '@/src/store
 import { getAllProducts } from '@/src/database/products';
 import { formatCurrency } from '@/src/utils/currency';
 import { generateSaleItemId } from '@/src/utils/id';
+import { useRouter } from 'expo-router';
 
 export default function NewSaleScreen({ navigation }: any) {
+  const router = useRouter();
   const dispatch = useDispatch();
   const sales = useSelector((state: RootState) => state.sales);
   const [products, setProducts] = useState<any[]>([]);
@@ -86,7 +88,7 @@ export default function NewSaleScreen({ navigation }: any) {
       Alert.alert('Error', 'Please select at least one product');
       return;
     }
-    navigation.navigate('BillSummary');
+    router.push('./summary');
   };
 
   const renderProductCard = ({ item }: any) => {

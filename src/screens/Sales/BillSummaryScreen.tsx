@@ -16,8 +16,10 @@ import { addUdhaar } from '@/src/database/customers';
 import { formatCurrency } from '@/src/utils/currency';
 import { generateSaleId } from '@/src/utils/id';
 import { shareBillViaWhatsApp, formatBillForWhatsApp } from '@/src/utils/whatsapp';
+import { useRouter } from 'expo-router';
 
 export default function BillSummaryScreen({ navigation }: any) {
+  const router = useRouter();
   const dispatch = useDispatch();
   const auth = useSelector((state: RootState) => state.auth);
   const sales = useSelector((state: RootState) => state.sales);
@@ -59,7 +61,7 @@ export default function BillSummaryScreen({ navigation }: any) {
       dispatch(clearCurrentSale());
 
       Alert.alert('Success', 'Sale completed successfully!');
-      navigation.navigate('Dashboard');
+      router.push('../');
     } catch (error) {
       console.error('Error completing sale:', error);
       Alert.alert('Error', 'Failed to complete sale');

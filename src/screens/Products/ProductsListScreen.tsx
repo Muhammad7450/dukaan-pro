@@ -11,8 +11,10 @@ import type { RootState } from '@/src/store';
 import { setProducts, setCategories, setSelectedCategory, setSearchQuery } from '@/src/store/slices/productsSlice';
 import { getAllProducts, getCategories, deleteProduct } from '@/src/database/products';
 import { formatCurrency } from '@/src/utils/currency';
+import { useRouter } from 'expo-router';
 
 export default function ProductsListScreen({ navigation }: any) {
+  const router = useRouter();
   const dispatch = useDispatch();
   const products = useSelector((state: RootState) => state.products);
   const [loading, setLoading] = useState(false);
@@ -88,7 +90,7 @@ export default function ProductsListScreen({ navigation }: any) {
 
   const renderProductCard = ({ item }: any) => (
     <TouchableOpacity
-      onPress={() => navigation.navigate('EditProduct', { productId: item.id })}
+      onPress={() => router.push(`./${item.id}`)}
       className="bg-surface rounded-lg p-4 mb-3 border border-border"
     >
       <View className="flex-row justify-between items-start mb-2">
@@ -116,7 +118,7 @@ export default function ProductsListScreen({ navigation }: any) {
 
       <View className="flex-row gap-2">
         <TouchableOpacity
-          onPress={() => navigation.navigate('EditProduct', { productId: item.id })}
+          onPress={() => router.push(`./${item.id}`)}
           className="flex-1 bg-primary rounded p-2 items-center"
         >
           <Text className="text-white text-sm font-semibold">Edit</Text>
