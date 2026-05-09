@@ -23,12 +23,14 @@ export interface Product {
  */
 export async function getAllProducts(): Promise<Product[]> {
   try {
+    console.log('📦 Fetching all products...');
     const db = await getDatabase();
     const result = await db.getAllAsync<Product>('SELECT * FROM products ORDER BY name ASC');
+    console.log(`✅ Fetched ${result?.length || 0} products`);
     return result || [];
   } catch (error) {
-    console.error('Error fetching products:', error);
-    throw error;
+    console.error('❌ Error fetching products:', error);
+    return [];
   }
 }
 

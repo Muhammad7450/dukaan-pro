@@ -8,9 +8,12 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'reac
 import { ScreenContainer } from '@/components/screen-container';
 import { addProduct, updateProduct, getProductById } from '@/src/database/products';
 import { generateProductId } from '@/src/utils/id';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
-export default function ProductFormScreen({ route, navigation }: any) {
-  const isEditing = route.params?.productId;
+export default function ProductFormScreen() {
+  const router = useRouter();
+  const params = useLocalSearchParams<{ id?: string }>();
+  const isEditing = params.id;
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: '',
@@ -30,7 +33,7 @@ export default function ProductFormScreen({ route, navigation }: any) {
 
   const loadProduct = async () => {
     try {
-      const product = await getProductById(route.params.productId);
+      const product = await getProductById(params.id!);
       if (product) {
         setForm({
           name: product.name,
@@ -72,7 +75,7 @@ export default function ProductFormScreen({ route, navigation }: any) {
     setLoading(true);
     try {
       if (isEditing) {
-        await updateProduct(route.params.productId, {
+        await updateProduct(params.id!, {
           name: form.name,
           category: form.category,
           purchase_price: parseFloat(form.purchase_price),
@@ -93,7 +96,7 @@ export default function ProductFormScreen({ route, navigation }: any) {
         });
         Alert.alert('Success', 'Product added');
       }
-      navigation.goBack();
+      router.back();
     } catch (error) {
       Alert.alert('Error', 'Failed to save product');
     } finally {
@@ -205,7 +208,7 @@ export default function ProductFormScreen({ route, navigation }: any) {
 
         {/* Cancel Button */}
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => router.back()}
           disabled={loading}
           className="rounded-lg p-4 items-center border border-border"
         >

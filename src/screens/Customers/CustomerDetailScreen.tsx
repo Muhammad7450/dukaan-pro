@@ -8,16 +8,19 @@ import { View, Text, TouchableOpacity, FlatList, Alert, RefreshControl } from 'r
 import { ScreenContainer } from '@/components/screen-container';
 import { getCustomerById } from '@/src/database/customers';
 import { formatCurrency } from '@/src/utils/currency';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
-export default function CustomerDetailScreen({ route, navigation }: any) {
-  const customerId = route.params?.customerId;
+export default function CustomerDetailScreen() {
+  const router = useRouter();
+  const params = useLocalSearchParams<{ id?: string }>();
+  const customerId = params.id;
   const [customer, setCustomer] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   const loadCustomer = async () => {
     try {
       setLoading(true);
-      const data = await getCustomerById(customerId);
+      const data = await getCustomerById(customerId!);
       setCustomer(data);
     } catch (error) {
       Alert.alert('Error', 'Failed to load customer');
@@ -79,7 +82,7 @@ export default function CustomerDetailScreen({ route, navigation }: any) {
             {/* Action Buttons */}
             <View className="gap-3">
               <TouchableOpacity
-                onPress={() => navigation.goBack()}
+                onPress={() => router.back()}
                 className="rounded-lg p-4 items-center border border-border"
               >
                 <Text className="text-foreground font-semibold">Back</Text>

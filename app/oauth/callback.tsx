@@ -170,8 +170,12 @@ export default function OAuthCallback() {
             hasCode: !!code,
             hasState: !!state,
           });
-          setStatus("error");
-          setErrorMessage("Missing code or state parameter");
+          // For PIN-based auth, just redirect to home
+          console.log("[OAuth] Redirecting to home (PIN auth mode)...");
+          setStatus("success");
+          setTimeout(() => {
+            router.replace("/(tabs)");
+          }, 500);
           return;
         }
 

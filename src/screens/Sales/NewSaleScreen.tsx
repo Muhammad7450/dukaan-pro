@@ -27,12 +27,19 @@ export default function NewSaleScreen({ navigation }: any) {
   const loadProducts = async () => {
     try {
       setLoading(true);
+      console.log('📦 NewSaleScreen: Loading products...');
       const allProducts = await getAllProducts();
+      console.log(`✅ NewSaleScreen: Loaded ${allProducts.length} products`);
       setProducts(allProducts);
       setFilteredProducts(allProducts);
+      
+      if (allProducts.length === 0) {
+        console.warn('⚠️ No products found in database');
+      }
     } catch (error) {
-      console.error('Error loading products:', error);
-      Alert.alert('Error', 'Failed to load products');
+      console.error('❌ Error loading products:', error);
+      setProducts([]);
+      setFilteredProducts([]);
     } finally {
       setLoading(false);
     }

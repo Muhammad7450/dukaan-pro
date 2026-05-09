@@ -84,13 +84,27 @@ CREATE INDEX IF NOT EXISTS idx_payments_customer_id ON payments(customer_id);
  */
 export async function initializeDatabase(): Promise<SQLite.SQLiteDatabase> {
   try {
+    console.log('🔄 Opening database:', DB_NAME);
     const db = await SQLite.openDatabaseAsync(DB_NAME);
+    console.log('✅ Database opened successfully');
     
     // Execute initialization SQL
     const statements = INIT_SQL.split(';').filter(stmt => stmt.trim());
-    for (const statement of statements) {
+    console.log(`📋 Executing ${statements.length} SQL statements`);
+    
+    for (let i = 0; i < statements.length; i++) {
+      const statement = statements[i];
       if (statement.trim()) {
-        await db.execAsync(statement);
+        try {
+          await db.execAsync(statement);
+          console.log(`✅ Statement ${i + 1}/${statements.length} executed`);
+        } catch (stmtError) {
+          console.error(`❌ Error in statement ${i + 1}:`, stmtError);
+          // Continue with next statement if it's a CREATE TABLE IF NOT EXISTS
+          if (!statement.includes('CREATE TABLE IF NOT EXISTS')) {
+            throw stmtError;
+          }
+        }
       }
     }
     
