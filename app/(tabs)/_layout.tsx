@@ -51,7 +51,7 @@ export default function TabLayout() {
         name="newsale"
         options={{
           title: "New Sale",
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="cart.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name={"shoppingcart.fill" as any} color={color} />,
         }}
       />
 
@@ -60,7 +60,7 @@ export default function TabLayout() {
         name="customers"
         options={{
           title: "Customers",
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.2.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
         }}
       />
 
