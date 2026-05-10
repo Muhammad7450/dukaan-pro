@@ -9,10 +9,9 @@ import { ScreenContainer } from '@/components/screen-container';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '@/src/store';
 import { clearCurrentSale } from '@/src/store/slices/salesSlice';
-import { createSale } from '@/src/database/sales';
+import { createSale, addSaleItem } from '@/src/database/sales';
 import { decreaseStock } from '@/src/database/products';
-import { getCustomerByPhone } from '@/src/database/customers';
-import { addUdhaar } from '@/src/database/customers';
+import { updateCustomer, getCustomerById } from '@/src/database/customers';
 import { formatCurrency } from '@/src/utils/currency';
 import { generateSaleId } from '@/src/utils/id';
 import { shareBillViaWhatsApp, formatBillForWhatsApp } from '@/src/utils/whatsapp';
@@ -33,19 +32,26 @@ export default function BillSummaryScreen({ navigation }: any) {
       const saleId = generateSaleId();
 
       // Create sale in database
-      await createSale(
-        saleId,
-        sales.currentSale.totalAmount,
-        sales.currentSale.paymentType,
-        sales.currentSale.customerId,
-        sales.currentSale.items.map(item => ({
+      await createSale({
+        id: saleId,
+        total_amount: sales.currentSale.totalAmount,
+        payment_type: sales.currentSale.paymentType,
+        customer_id: sales.currentSale.customerId || null,
+        created_at: new Date().toISOString(),
+      });
+
+      // Add sale items
+      for (const item of sales.currentSale.items) {
+        await addSaleItem({
+          id: generateSaleId(),
+          sale_id: saleId,
           product_id: item.product_id,
           product_name: item.product_name,
           quantity: item.quantity,
           unit_price: item.unit_price,
           subtotal: item.subtotal,
-        }))
-      );
+        });
+      }
 
       // Decrease stock for each product
       for (const item of sales.currentSale.items) {
@@ -54,7 +60,14 @@ export default function BillSummaryScreen({ navigation }: any) {
 
       // If udhaar, add to customer balance
       if (sales.currentSale.paymentType === 'udhaar' && sales.currentSale.customerId) {
-        await addUdhaar(sales.currentSale.customerId, sales.currentSale.totalAmount);
+        const customer = await getCustomerById(sales.currentSale.customerId);
+        if (customer) {
+          await updateCustomer(sales.currentSale.customerId, {
+            ...customer,
+            total_udhaar: customer.total_udhaar + sales.currentSale.totalAmount,
+            updated_at: new Date().toISOString(),
+          });
+        }
       }
 
       // Clear current sale from Redux

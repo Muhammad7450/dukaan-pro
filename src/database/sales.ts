@@ -34,13 +34,14 @@ export interface SaleWithItems extends Sale {
 export async function getAllSales(): Promise<Sale[]> {
   try {
     const db = await getDatabase();
+    if (!db) return [];
     const result = await db.getAllAsync<Sale>(
       'SELECT * FROM sales ORDER BY created_at DESC'
     );
     return result || [];
   } catch (error) {
     console.error('Error fetching sales:', error);
-    throw error;
+    return [];
   }
 }
 
@@ -50,6 +51,7 @@ export async function getAllSales(): Promise<Sale[]> {
 export async function getSalesByDate(date: string): Promise<Sale[]> {
   try {
     const db = await getDatabase();
+    if (!db) return [];
     const result = await db.getAllAsync<Sale>(
       `SELECT * FROM sales 
        WHERE DATE(created_at) = DATE(?) 
@@ -59,7 +61,7 @@ export async function getSalesByDate(date: string): Promise<Sale[]> {
     return result || [];
   } catch (error) {
     console.error('Error fetching sales by date:', error);
-    throw error;
+    return [];
   }
 }
 
@@ -69,6 +71,7 @@ export async function getSalesByDate(date: string): Promise<Sale[]> {
 export async function getSalesByDateRange(startDate: string, endDate: string): Promise<Sale[]> {
   try {
     const db = await getDatabase();
+    if (!db) return [];
     const result = await db.getAllAsync<Sale>(
       `SELECT * FROM sales 
        WHERE DATE(created_at) BETWEEN DATE(?) AND DATE(?)
@@ -78,103 +81,24 @@ export async function getSalesByDateRange(startDate: string, endDate: string): P
     return result || [];
   } catch (error) {
     console.error('Error fetching sales by date range:', error);
-    throw error;
+    return [];
   }
 }
 
 /**
- * Get sales for a specific customer
+ * Create a new sale
  */
-export async function getSalesByCustomer(customerId: string): Promise<Sale[]> {
+export async function createSale(sale: Omit<Sale, 'synced'>): Promise<Sale> {
   try {
     const db = await getDatabase();
-    const result = await db.getAllAsync<Sale>(
-      'SELECT * FROM sales WHERE customer_id = ? ORDER BY created_at DESC',
-      [customerId]
-    );
-    return result || [];
-  } catch (error) {
-    console.error('Error fetching customer sales:', error);
-    throw error;
-  }
-}
-
-/**
- * Get single sale with items
- */
-export async function getSaleWithItems(saleId: string): Promise<SaleWithItems | null> {
-  try {
-    const db = await getDatabase();
+    if (!db) throw new Error('Database not available');
     
-    const sale = await db.getFirstAsync<Sale>(
-      'SELECT * FROM sales WHERE id = ?',
-      [saleId]
-    );
-
-    if (!sale) return null;
-
-    const items = await db.getAllAsync<SaleItem>(
-      'SELECT * FROM sale_items WHERE sale_id = ?',
-      [saleId]
-    );
-
-    return {
-      ...sale,
-      items: items || [],
-    };
-  } catch (error) {
-    console.error('Error fetching sale with items:', error);
-    throw error;
-  }
-}
-
-/**
- * Create new sale with items
- */
-export async function createSale(
-  saleId: string,
-  totalAmount: number,
-  paymentType: 'cash' | 'udhaar',
-  customerId: string | null,
-  items: Omit<SaleItem, 'id' | 'sale_id'>[]
-): Promise<Sale> {
-  try {
-    const db = await getDatabase();
-    const now = new Date().toISOString();
-
-    // Insert sale
     await db.runAsync(
       `INSERT INTO sales (id, total_amount, payment_type, customer_id, created_at, synced)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [saleId, totalAmount, paymentType, customerId, now, 0]
+       VALUES (?, ?, ?, ?, ?, 0)`,
+      [sale.id, sale.total_amount, sale.payment_type, sale.customer_id || null, sale.created_at]
     );
-
-    // Insert sale items
-    for (const item of items) {
-      const itemId = `${saleId}-${item.product_id}`;
-      await db.runAsync(
-        `INSERT INTO sale_items (id, sale_id, product_id, product_name, quantity, unit_price, subtotal)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
-          itemId,
-          saleId,
-          item.product_id,
-          item.product_name,
-          item.quantity,
-          item.unit_price,
-          item.subtotal,
-        ]
-      );
-    }
-
-    return {
-      id: saleId,
-      total_amount: totalAmount,
-      payment_type: paymentType,
-      customer_id: customerId,
-      created_at: now,
-      synced: 0,
-    };
+    return { ...sale, synced: 0 };
   } catch (error) {
     console.error('Error creating sale:', error);
     throw error;
@@ -182,71 +106,121 @@ export async function createSale(
 }
 
 /**
- * Get today's total sales amount
+ * Add item to a sale
  */
-export async function getTodaysSalesAmount(): Promise<number> {
+export async function addSaleItem(item: SaleItem): Promise<SaleItem> {
   try {
     const db = await getDatabase();
-    const result = await db.getFirstAsync<{ total: number }>(
-      `SELECT COALESCE(SUM(total_amount), 0) as total 
-       FROM sales 
-       WHERE DATE(created_at) = DATE('now')`,
+    if (!db) throw new Error('Database not available');
+    
+    await db.runAsync(
+      `INSERT INTO sale_items (id, sale_id, product_id, product_name, quantity, unit_price, subtotal)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [item.id, item.sale_id, item.product_id, item.product_name, item.quantity, item.unit_price, item.subtotal]
     );
-    return result?.total || 0;
+    return item;
   } catch (error) {
-    console.error('Error fetching today sales amount:', error);
+    console.error('Error adding sale item:', error);
     throw error;
   }
 }
 
 /**
- * Get today's transaction count
+ * Get sale items for a sale
  */
-export async function getTodaysTransactionCount(): Promise<number> {
+export async function getSaleItems(saleId: string): Promise<SaleItem[]> {
   try {
     const db = await getDatabase();
+    if (!db) return [];
+    
+    const result = await db.getAllAsync<SaleItem>(
+      'SELECT * FROM sale_items WHERE sale_id = ?',
+      [saleId]
+    );
+    return result || [];
+  } catch (error) {
+    console.error('Error fetching sale items:', error);
+    return [];
+  }
+}
+
+/**
+ * Get complete sale with items
+ */
+export async function getSaleWithItems(saleId: string): Promise<SaleWithItems | null> {
+  try {
+    const db = await getDatabase();
+    if (!db) return null;
+    
+    const sale = await db.getFirstAsync<Sale>(
+      'SELECT * FROM sales WHERE id = ?',
+      [saleId]
+    );
+    
+    if (!sale) return null;
+    
+    const items = await getSaleItems(saleId);
+    return { ...sale, items };
+  } catch (error) {
+    console.error('Error fetching sale with items:', error);
+    return null;
+  }
+}
+
+/**
+ * Get total sales amount for a date
+ */
+export async function getTotalSalesForDate(date: string): Promise<number> {
+  try {
+    const db = await getDatabase();
+    if (!db) return 0;
+    
+    const result = await db.getFirstAsync<{ total: number }>(
+      `SELECT COALESCE(SUM(total_amount), 0) as total FROM sales 
+       WHERE DATE(created_at) = DATE(?)`,
+      [date]
+    );
+    return result?.total || 0;
+  } catch (error) {
+    console.error('Error calculating total sales:', error);
+    return 0;
+  }
+}
+
+/**
+ * Get total sales count for a date
+ */
+export async function getTotalSalesCountForDate(date: string): Promise<number> {
+  try {
+    const db = await getDatabase();
+    if (!db) return 0;
+    
     const result = await db.getFirstAsync<{ count: number }>(
-      `SELECT COUNT(*) as count 
-       FROM sales 
-       WHERE DATE(created_at) = DATE('now')`,
+      `SELECT COUNT(*) as count FROM sales 
+       WHERE DATE(created_at) = DATE(?)`,
+      [date]
     );
     return result?.count || 0;
   } catch (error) {
-    console.error('Error fetching today transaction count:', error);
-    throw error;
-  }
-}
-
-/**
- * Get total sales for a date range
- */
-export async function getTotalSalesForRange(startDate: string, endDate: string): Promise<number> {
-  try {
-    const db = await getDatabase();
-    const result = await db.getFirstAsync<{ total: number }>(
-      `SELECT COALESCE(SUM(total_amount), 0) as total 
-       FROM sales 
-       WHERE DATE(created_at) BETWEEN DATE(?) AND DATE(?)`,
-      [startDate, endDate]
-    );
-    return result?.total || 0;
-  } catch (error) {
-    console.error('Error fetching total sales for range:', error);
-    throw error;
+    console.error('Error counting sales:', error);
+    return 0;
   }
 }
 
 /**
  * Get best selling products
  */
-export async function getBestSellingProducts(limit: number = 5): Promise<Array<{ product_name: string; total_qty: number; total_revenue: number }>> {
+export async function getBestSellingProducts(limit: number = 5): Promise<any[]> {
   try {
     const db = await getDatabase();
-    const result = await db.getAllAsync<{ product_name: string; total_qty: number; total_revenue: number }>(
+    if (!db) return [];
+    
+    const result = await db.getAllAsync(
       `SELECT 
         product_name,
         SUM(quantity) as total_qty,
-        SUM(subtotal) as total_revenue
+        SUM(subtotal) as total_amount,
+        COUNT(*) as times_sold
        FROM sale_items
        GROUP BY product_id
        ORDER BY total_qty DESC
@@ -256,16 +230,18 @@ export async function getBestSellingProducts(limit: number = 5): Promise<Array<{
     return result || [];
   } catch (error) {
     console.error('Error fetching best selling products:', error);
-    throw error;
+    return [];
   }
 }
 
 /**
- * Get total profit for a date range
+ * Get profit for date range
  */
-export async function getTotalProfitForRange(startDate: string, endDate: string): Promise<number> {
+export async function getProfitForDateRange(startDate: string, endDate: string): Promise<number> {
   try {
     const db = await getDatabase();
+    if (!db) return 0;
+    
     const result = await db.getFirstAsync<{ profit: number }>(
       `SELECT COALESCE(SUM(si.subtotal - (p.purchase_price * si.quantity)), 0) as profit
        FROM sale_items si
@@ -276,7 +252,7 @@ export async function getTotalProfitForRange(startDate: string, endDate: string)
     );
     return result?.profit || 0;
   } catch (error) {
-    console.error('Error fetching total profit:', error);
-    throw error;
+    console.error('Error calculating profit:', error);
+    return 0;
   }
 }

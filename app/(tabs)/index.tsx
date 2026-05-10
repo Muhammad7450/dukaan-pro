@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '@/src/store';
 import { setTodaysSalesMetrics } from '@/src/store/slices/salesSlice';
 import { setProducts } from '@/src/store/slices/productsSlice';
-import { getTodaysSalesAmount, getTodaysTransactionCount } from '@/src/database/sales';
+import { getTotalSalesForDate, getTotalSalesCountForDate } from '@/src/database/sales';
 import { getAllProducts, getLowStockProducts } from '@/src/database/products';
 import { formatCurrency } from '@/src/utils/currency';
 import { useRouter } from 'expo-router';
@@ -21,8 +21,9 @@ export default function HomeScreen() {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const todaysSalesAmount = await getTodaysSalesAmount();
-      const todaysTransactionCount = await getTodaysTransactionCount();
+      const today = new Date().toISOString().split('T')[0];
+      const todaysSalesAmount = await getTotalSalesForDate(today);
+      const todaysTransactionCount = await getTotalSalesCountForDate(today);
       dispatch(setTodaysSalesMetrics({ amount: todaysSalesAmount, count: todaysTransactionCount }));
 
       const allProducts = await getAllProducts();

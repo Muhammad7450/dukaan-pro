@@ -9,7 +9,7 @@ import { ScreenContainer } from '@/components/screen-container';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '@/src/store';
 import { setTimeFilter, setSalesMetrics, setBestSellingProducts } from '@/src/store/slices/reportsSlice';
-import { getTotalSalesForRange, getTotalProfitForRange, getBestSellingProducts } from '@/src/database/sales';
+import { getTotalSalesForDate, getProfitForDateRange, getBestSellingProducts } from '@/src/database/sales';
 import { getDateRange } from '@/src/utils/dates';
 import { formatCurrency } from '@/src/utils/currency';
 
@@ -25,8 +25,8 @@ export default function ReportsScreen({ navigation }: any) {
       const { start, end } = getDateRange(reports.timeFilter);
 
       // Get sales metrics
-      const totalSales = await getTotalSalesForRange(start, end);
-      const totalProfit = await getTotalProfitForRange(start, end);
+      const totalSales = await getTotalSalesForDate(start);
+      const totalProfit = await getProfitForDateRange(start, end);
 
       // Get best selling products
       const bestSelling = await getBestSellingProducts(5);

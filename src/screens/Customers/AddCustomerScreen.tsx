@@ -33,11 +33,14 @@ export default function AddCustomerScreen({ navigation }: any) {
 
     setLoading(true);
     try {
-      await addCustomer(
-        generateCustomerId(),
-        form.name,
-        form.phone
-      );
+      await addCustomer({
+        id: generateCustomerId(),
+        name: form.name,
+        phone: form.phone,
+        total_udhaar: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
       Alert.alert('Success', 'Customer added');
       navigation.goBack();
     } catch (error) {
