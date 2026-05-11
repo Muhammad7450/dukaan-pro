@@ -91,9 +91,15 @@
 
 
 ## Phase 9: Splash Screen & Branding
-- [ ] Create animated splash screen with turtle logo
-- [ ] Fix app icon image sizes (reduce from 1.2MB to <100KB)
-- [ ] Optimize splash screen images for mobile
-- [ ] Implement splash screen animations
-- [ ] Add loading progress bar animation
-- [ ] Match splash design with app theme
+- [x] Create animated splash screen with turtle logo
+- [x] Fix app icon image sizes (reduce from 1.2MB to <100KB)
+- [x] Optimize splash screen images for mobile
+- [x] Implement splash screen animations
+- [x] Add loading progress bar animation
+- [x] Match splash design with app theme
+
+## Bugs to Fix (CRITICAL)
+- [x] Database save product failing on native device (SQLite issue) - FIXED: Rewrote schema.ts with batch SQL and transactions
+- [x] Add customer not working (database error) - FIXED: Same database fix
+- [x] Login/PIN authentication not showing - app bypasses auth - FIXED: Removed unstable_settings.anchor
+- [x] Need to implement proper authentication flow with setup screen - FIXED: Auth state restoration improved

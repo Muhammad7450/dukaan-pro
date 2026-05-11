@@ -29,9 +29,7 @@ import SplashScreen from "@/src/screens/SplashScreen";
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
 
-export const unstable_settings = {
-  anchor: "(tabs)",
-};
+// Removed unstable_settings.anchor to allow proper auth gating
 
 /**
  * Root Layout with Auth Navigation
@@ -46,24 +44,27 @@ function RootLayoutNav() {
   useEffect(() => {
     async function initializeApp() {
       try {
-        // Initialize SQLite database
-        await initializeDatabase();
+        console.log('Initializing app...');
+        
+        // Initialize SQLite database first
+        const db = await initializeDatabase();
+        console.log('Database initialized:', db ? 'success' : 'web platform');
 
         // Restore auth state from AsyncStorage
         const savedAuthState = await getAuthState();
+        console.log('Saved auth state:', savedAuthState);
+        
         if (savedAuthState) {
           dispatch(restoreAuthState(savedAuthState));
-        }
-
-        // Check if setup is complete
-        const setupComplete = await isSetupComplete();
-        if (setupComplete) {
-          dispatch(restoreAuthState({ isSetupComplete: true }));
+          console.log('Auth state restored');
+        } else {
+          console.log('No saved auth state - first time user');
         }
       } catch (error) {
         console.error('App initialization error:', error);
       } finally {
         setIsReady(true);
+        console.log('App ready');
       }
     }
 
