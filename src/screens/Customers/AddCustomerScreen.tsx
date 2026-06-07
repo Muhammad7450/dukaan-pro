@@ -5,11 +5,13 @@
 
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
 import { addCustomer } from '@/src/database/customers';
 import { generateCustomerId } from '@/src/utils/id';
 
-export default function AddCustomerScreen({ navigation }: any) {
+export default function AddCustomerScreen() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: '',
@@ -42,9 +44,10 @@ export default function AddCustomerScreen({ navigation }: any) {
         updated_at: new Date().toISOString(),
       });
       Alert.alert('Success', 'Customer added');
-      navigation.goBack();
+      router.back();
     } catch (error) {
-      Alert.alert('Error', 'Failed to add customer');
+      console.error('Add customer error:', error);
+      Alert.alert('Error', 'Failed to add customer: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setLoading(false);
     }
@@ -97,7 +100,7 @@ export default function AddCustomerScreen({ navigation }: any) {
 
         {/* Cancel Button */}
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => router.back()}
           disabled={loading}
           className="rounded-lg p-4 items-center border border-border"
         >

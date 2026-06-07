@@ -13,7 +13,7 @@ import { getAllCustomers, getTotalUdhaar, deleteCustomer } from '@/src/database/
 import { formatCurrency } from '@/src/utils/currency';
 import { useRouter } from 'expo-router';
 
-export default function CustomersListScreen({ navigation }: any) {
+export default function CustomersListScreen() {
   const router = useRouter();
   const dispatch = useDispatch();
   const customers = useSelector((state: RootState) => state.customers);
