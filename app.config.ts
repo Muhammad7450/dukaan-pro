@@ -28,8 +28,8 @@ const schemeFromBundleId = `manus${timestamp}`;
 
 const env = {
   // App branding - update these values directly (do not use env vars)
-  appName: "DukaanPro",
-  appSlug: "dukaan-pro",
+  appName: "Neon Requiem",
+  appSlug: "neon-requiem",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
   logoUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310519663532302640/nugkBPT7pt3peupCAFxHeY/icon-JWFeqAiMuZfiVNnA5fGzZG.png",
